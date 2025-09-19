@@ -1,0 +1,6 @@
+services:
+  main:
+    image: shiftinv/github-webhookify
+    build: .
+    restart: unless-stopped
+    env_file: .env

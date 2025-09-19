@@ -1,0 +1,24 @@
+{
+    "fmt": {
+        "indentWidth": 4,
+        "lineWidth": 100,
+        "exclude": [
+            ".vscode"
+        ]
+    },
+    "lint": {
+        "rules": {
+            "exclude": ["no-explicit-any"]
+        }
+    },
+    "imports": {
+        "@octokit/webhooks-types": "npm:@octokit/webhooks-types@^7.6.1"
+    },
+    "unstable": [
+        "kv"
+    ],
+    "compilerOptions": {
+        "noUncheckedIndexedAccess": true,
+        "strictFunctionTypes": true
+    }
+}
