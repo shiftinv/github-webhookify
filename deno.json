@@ -12,6 +12,7 @@
         }
     },
     "imports": {
+        "@octokit/request": "npm:@octokit/request@^10.0.3",
         "@octokit/webhooks-types": "npm:@octokit/webhooks-types@^7.6.1"
     },
     "unstable": [
