@@ -14,6 +14,6 @@ jobs:
           deno-version: v2.x
 
       - name: Run prek
-        uses: j178/prek-action@v3.0.1
+        uses: j178/prek-action@v1.0.3
 
       # - run: deno test
