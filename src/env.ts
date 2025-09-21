@@ -20,6 +20,7 @@ function getEnv(key: string, required: boolean = true): string | undefined {
 export default {
     DEBUG: parseBool(getEnv("DEBUG", false) ?? "0"),
     WEBHOOK_URL: getEnv("WEBHOOK_URL", true),
+    GITHUB_TOKEN: getEnv("GITHUB_TOKEN", false),
 
     SENTRY_DSN: getEnv("SENTRY_DSN", false),
     SENTRY_DEBUG: parseBool(getEnv("SENTRY_DEBUG", false) ?? "0"),

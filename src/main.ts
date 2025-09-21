@@ -21,7 +21,10 @@ async function checkGitHub(): Promise<void> {
             repo: "disnake",
             // I don't expect more than 100 new events to occur within 5 minutes for now, to keep things simple
             per_page: 100,
-            headers: { "If-None-Match": etag },
+            headers: {
+                "Authorization": `token ${env.GITHUB_TOKEN}`,
+                "If-None-Match": etag,
+            },
         });
     } catch (e) {
         if (e instanceof RequestError && e.status == 304) {
