@@ -6,14 +6,18 @@ import env from "./env.ts";
 import type PushEvent from "./pushEvent.d.ts";
 import { initSentry } from "./sentry.ts";
 
-const KV_KEY_LAST_ID = ["last-id"];
-const KV_KEY_ETAG = ["last-etag"];
 const kv = await Deno.openKv(Deno.env.get("KV_PATH"));
 
+const KV_KEY = ["last-state"];
+// keep global state to save kv units, since deno deploy isolates usually stay alive for a while
+type State = { etag: string | undefined; lastId: number };
+let state: State | null = null;
+
 async function checkGitHub(): Promise<void> {
-    const lastId = (await kv.get<number>(KV_KEY_LAST_ID)).value ?? 0;
+    if (!state) state = (await kv.get<State>(KV_KEY)).value;
+    const etag = state?.etag;
+    const lastId = state?.lastId ?? 0;
     const initialRun = lastId === 0;
-    const etag = (await kv.get<string>(KV_KEY_ETAG)).value || undefined;
 
     let events: Awaited<ReturnType<typeof githubRequest<"GET /repos/{owner}/{repo}/events">>>;
     try {
@@ -37,7 +41,6 @@ async function checkGitHub(): Promise<void> {
 
     const newEtag = events.headers["etag"];
     if (env.DEBUG) console.debug(`previous etag: ${etag}, new etag: ${newEtag}`);
-    if (newEtag) await kv.set(KV_KEY_ETAG, newEtag);
 
     // on the initial run, we don't want to send any events
     const eventsData = initialRun ? [] : events.data.toReversed();
@@ -57,7 +60,10 @@ async function checkGitHub(): Promise<void> {
     if (env.DEBUG) console.debug(`found ${newEvents} new events since last check`);
 
     const newId = events.data[0] ? Number(events.data[0].id) : null;
-    if (newId) await kv.set(KV_KEY_LAST_ID, newId);
+    if (newEtag != etag || newId != lastId) {
+        state = { etag: newEtag ?? etag, lastId: newId ?? lastId };
+        await kv.set(KV_KEY, state);
+    }
 }
 
 async function sendWebhook(event: PartialWebhookPushEvent): Promise<void> {
