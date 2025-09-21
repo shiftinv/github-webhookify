@@ -2,7 +2,8 @@
   "version": "5",
   "specifiers": {
     "npm:@octokit/request@^10.0.3": "10.0.3",
-    "npm:@octokit/webhooks-types@^7.6.1": "7.6.1"
+    "npm:@octokit/webhooks-types@^7.6.1": "7.6.1",
+    "npm:@sentry/deno@^10.12.0": "10.12.0"
   },
   "npm": {
     "@octokit/endpoint@11.0.0": {
@@ -40,6 +41,19 @@
     "@octokit/webhooks-types@7.6.1": {
       "integrity": "sha512-S8u2cJzklBC0FgTwWVLaM8tMrDuDMVE4xiTK4EYXM9GntyvrdbSoxqDQa+Fh57CCNApyIpyeqPhhFEmHPfrXgw=="
     },
+    "@opentelemetry/api@1.9.0": {
+      "integrity": "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="
+    },
+    "@sentry/core@10.12.0": {
+      "integrity": "sha512-Jrf0Yo7DvmI/ZQcvBnA0xKNAFkJlVC/fMlvcin+5IrFNRcqOToZ2vtF+XqTgjRZymXQNE8s1QTD7IomPHk0TAw=="
+    },
+    "@sentry/deno@10.12.0": {
+      "integrity": "sha512-52J/FuyCahQsiGl0149RkT3FWgnZFudTpeXaloTqL/vW4JM2Y1IWJbQNly7m39ZcTt7g9XUDJrpQ9XvAINiEjg==",
+      "dependencies": [
+        "@opentelemetry/api",
+        "@sentry/core"
+      ]
+    },
     "fast-content-type-parse@3.0.0": {
       "integrity": "sha512-ZvLdcY8P+N8mGQJahJV5G4U88CSvT1rP8ApL6uETe88MBXrBHAkZlSEySdUlyztF7ccb+Znos3TFqaepHxdhBg=="
     },
@@ -50,7 +64,8 @@
   "workspace": {
     "dependencies": [
       "npm:@octokit/request@^10.0.3",
-      "npm:@octokit/webhooks-types@^7.6.1"
+      "npm:@octokit/webhooks-types@^7.6.1",
+      "npm:@sentry/deno@^10.12.0"
     ]
   }
 }

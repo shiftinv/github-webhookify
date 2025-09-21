@@ -13,10 +13,12 @@
     },
     "imports": {
         "@octokit/request": "npm:@octokit/request@^10.0.3",
-        "@octokit/webhooks-types": "npm:@octokit/webhooks-types@^7.6.1"
+        "@octokit/webhooks-types": "npm:@octokit/webhooks-types@^7.6.1",
+        "@sentry/deno": "npm:@sentry/deno@^10.12.0"
     },
     "unstable": [
-        "kv"
+        "kv",
+        "cron"
     ],
     "compilerOptions": {
         "noUncheckedIndexedAccess": true,

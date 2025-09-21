@@ -1,13 +1,15 @@
 import { request as githubRequest } from "@octokit/request";
 
 import { convertPushEvent, PartialWebhookPushEvent } from "./convert.ts";
+import env from "./env.ts";
 import type PushEvent from "./pushEvent.d.ts";
+import { initSentry } from "./sentry.ts";
 
-const KV_KEY = "last-update";
+const KV_KEY_LAST_UPDATE = ["last-update"];
 const kv = await Deno.openKv(Deno.env.get("KV_PATH"));
 
 async function checkGitHub(): Promise<void> {
-    const lastId = (await kv.get<number>([KV_KEY])).value ?? 0;
+    const lastId = (await kv.get<number>(KV_KEY_LAST_UPDATE)).value ?? 0;
 
     const events = await githubRequest("GET /repos/{owner}/{repo}/events", {
         owner: "DisnakeDev",
@@ -29,7 +31,13 @@ async function checkGitHub(): Promise<void> {
 
 async function sendWebhook(event: PartialWebhookPushEvent): Promise<void> {
     const data = JSON.stringify(event);
-    const res = await fetch(Deno.env.get("WEBHOOK_URL")!, {
+
+    console.debug(
+        `sending webhook to ${env.WEBHOOK_URL}, commits: ${
+            JSON.stringify(event.commits.map((c) => c.id))
+        }`,
+    );
+    const res = await fetch(env.WEBHOOK_URL, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -37,9 +45,14 @@ async function sendWebhook(event: PartialWebhookPushEvent): Promise<void> {
         },
         body: data,
     });
-    console.log(res);
-    if (!res.ok) throw res;
+
+    console.debug(`webhook returned status ${res.status}`);
+    if (!res.ok) {
+        throw new Error(`failed to execute webhook with status ${res.status}: ${await res.text()}`);
+    }
 }
+
+initSentry();
 
 if (Deno.env.get("RUN_IMMEDIATELY")) {
     await checkGitHub();
