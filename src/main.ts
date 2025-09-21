@@ -12,6 +12,7 @@ const kv = await Deno.openKv(Deno.env.get("KV_PATH"));
 
 async function checkGitHub(): Promise<void> {
     const lastId = (await kv.get<number>(KV_KEY_LAST_ID)).value ?? 0;
+    const initialRun = lastId === 0;
     const etag = (await kv.get<string>(KV_KEY_ETAG)).value || undefined;
 
     let events: Awaited<ReturnType<typeof githubRequest<"GET /repos/{owner}/{repo}/events">>>;
@@ -38,10 +39,13 @@ async function checkGitHub(): Promise<void> {
     if (env.DEBUG) console.debug(`previous etag: ${etag}, new etag: ${newEtag}`);
     if (newEtag) await kv.set(KV_KEY_ETAG, newEtag);
 
+    // on the initial run, we don't want to send any events
+    const eventsData = initialRun ? [] : events.data.toReversed();
+
     let newEvents = 0;
-    for (const ev of events.data) {
+    for (const ev of eventsData) {
         const id = Number(ev.id);
-        if (id <= lastId) break;
+        if (id <= lastId) continue;
         newEvents++;
 
         if (ev.type !== "PushEvent") continue;
@@ -49,9 +53,6 @@ async function checkGitHub(): Promise<void> {
         // octokit types are unfortunately wrong and incomplete, so just cast it
         const newEvent = convertPushEvent(ev as PushEvent);
         await sendWebhook(newEvent);
-
-        // if we didn't have a previous ID, only send the latest event to avoid spam on initial run
-        if (lastId === 0) break;
     }
     if (env.DEBUG) console.debug(`found ${newEvents} new events since last check`);
 
