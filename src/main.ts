@@ -49,7 +49,9 @@ async function checkGitHub(): Promise<void> {
         // octokit types are unfortunately wrong and incomplete, so just cast it
         const newEvent = convertPushEvent(ev as PushEvent);
         await sendWebhook(newEvent);
-        break;
+
+        // if we didn't have a previous ID, only send the latest event to avoid spam on initial run
+        if (lastId === 0) break;
     }
     if (env.DEBUG) console.debug(`found ${newEvents} new events since last check`);
 
