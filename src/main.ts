@@ -6,12 +6,12 @@ import env from "./env.ts";
 import type PushEvent from "./pushEvent.d.ts";
 import { initSentry } from "./sentry.ts";
 
-const KV_KEY_LAST_UPDATE = ["last-update"];
+const KV_KEY_LAST_ID = ["last-id"];
 const KV_KEY_ETAG = ["last-etag"];
 const kv = await Deno.openKv(Deno.env.get("KV_PATH"));
 
 async function checkGitHub(): Promise<void> {
-    const lastId = (await kv.get<number>(KV_KEY_LAST_UPDATE)).value ?? 0;
+    const lastId = (await kv.get<number>(KV_KEY_LAST_ID)).value ?? 0;
     const etag = (await kv.get<string>(KV_KEY_ETAG)).value || undefined;
 
     let events: Awaited<ReturnType<typeof githubRequest<"GET /repos/{owner}/{repo}/events">>>;
@@ -28,19 +28,22 @@ async function checkGitHub(): Promise<void> {
         });
     } catch (e) {
         if (e instanceof RequestError && e.status == 304) {
-            console.debug("received 304");
+            if (env.DEBUG) console.debug("received 304");
             return;
         }
         throw e;
     }
 
     const newEtag = events.headers["etag"];
-    console.debug(`previous etag: ${etag}, new etag: ${newEtag}`);
+    if (env.DEBUG) console.debug(`previous etag: ${etag}, new etag: ${newEtag}`);
     if (newEtag) await kv.set(KV_KEY_ETAG, newEtag);
 
+    let newEvents = 0;
     for (const ev of events.data) {
         const id = Number(ev.id);
         if (id <= lastId) break;
+        newEvents++;
+
         if (ev.type !== "PushEvent") continue;
 
         // octokit types are unfortunately wrong and incomplete, so just cast it
@@ -48,6 +51,10 @@ async function checkGitHub(): Promise<void> {
         await sendWebhook(newEvent);
         break;
     }
+    if (env.DEBUG) console.debug(`found ${newEvents} new events since last check`);
+
+    const newId = events.data[0] ? Number(events.data[0].id) : null;
+    if (newId) await kv.set(KV_KEY_LAST_ID, newId);
 }
 
 async function sendWebhook(event: PartialWebhookPushEvent): Promise<void> {
