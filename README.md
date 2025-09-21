@@ -1,3 +1,3 @@
 # github-webhookify
 
-TODO.
+GitHub -> Discord webhook bridge, for commits in third-party repositories.
