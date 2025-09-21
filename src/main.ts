@@ -84,8 +84,6 @@ initSentry();
 
 if (Deno.env.get("RUN_IMMEDIATELY")) {
     await checkGitHub();
-    // deno-lint-ignore no-debugger
-    debugger;
 } else {
     Deno.cron(
         "check github",
