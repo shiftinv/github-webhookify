@@ -40,7 +40,7 @@ function convertCommit(
     };
 }
 
-type PartialWebhookPushEvent =
+export type PartialWebhookPushEvent =
     & Omit<WebhookPushEvent, "repository" | "sender" | "commits" | "head_commit">
     & {
         repository: PartialRepository;

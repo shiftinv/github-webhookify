@@ -1,12 +1,12 @@
 import { request as githubRequest } from "@octokit/request";
 
-import { convertPushEvent } from "./convert.ts";
+import { convertPushEvent, PartialWebhookPushEvent } from "./convert.ts";
 import type PushEvent from "./pushEvent.d.ts";
 
 const KV_KEY = "last-update";
 const kv = await Deno.openKv(Deno.env.get("KV_PATH"));
 
-async function checkGitHub() {
+async function checkGitHub(): Promise<void> {
     const lastId = (await kv.get<number>([KV_KEY])).value ?? 0;
 
     const events = await githubRequest("GET /repos/{owner}/{repo}/events", {
@@ -22,8 +22,23 @@ async function checkGitHub() {
 
         // octokit types are unfortunately wrong and incomplete, so just cast it
         const newEvent = convertPushEvent(ev as PushEvent);
-        console.log(newEvent);
+        await sendWebhook(newEvent);
+        break;
     }
+}
+
+async function sendWebhook(event: PartialWebhookPushEvent): Promise<void> {
+    const data = JSON.stringify(event);
+    const res = await fetch(Deno.env.get("WEBHOOK_URL")!, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-GitHub-Event": "push",
+        },
+        body: data,
+    });
+    console.log(res);
+    if (!res.ok) throw res;
 }
 
 if (Deno.env.get("RUN_IMMEDIATELY")) {
