@@ -7,6 +7,13 @@ export function parseBool(value: string): boolean {
     throw new InvalidBoolError(`invalid bool value: '${value}'`);
 }
 
+function parseRepo(s: string) {
+    return /^(?<owner>[^\/]+)\/(?<name>[^\/]+)$/.exec(s)!.groups! as {
+        owner: string;
+        name: string;
+    };
+}
+
 function getEnv(key: string, required: false): string | undefined;
 function getEnv(key: string, required?: true): string;
 function getEnv(key: string, required: boolean = true): string | undefined {
@@ -19,6 +26,8 @@ function getEnv(key: string, required: boolean = true): string | undefined {
 
 export default {
     DEBUG: parseBool(getEnv("DEBUG", false) ?? "0"),
+
+    REPO_NAME: parseRepo(getEnv("REPO_NAME", true)),
     WEBHOOK_URL: getEnv("WEBHOOK_URL", true),
     GITHUB_TOKEN: getEnv("GITHUB_TOKEN", false),
 

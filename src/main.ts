@@ -17,8 +17,8 @@ async function checkGitHub(): Promise<void> {
     let events: Awaited<ReturnType<typeof githubRequest<"GET /repos/{owner}/{repo}/events">>>;
     try {
         events = await githubRequest("GET /repos/{owner}/{repo}/events", {
-            owner: "DisnakeDev",
-            repo: "disnake",
+            owner: env.REPO_NAME.owner,
+            repo: env.REPO_NAME.name,
             // I don't expect more than 100 new events to occur within 5 minutes for now, to keep things simple
             per_page: 100,
             headers: {
