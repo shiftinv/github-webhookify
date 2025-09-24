@@ -75,7 +75,7 @@ async function checkGitHub(): Promise<void> {
     if ((newEtag && newEtag !== etag) || (newId && newId !== lastId)) {
         state = { etag: newEtag ?? etag, lastId: newId ?? lastId };
         await kv.set(KV_KEY, state);
-        if (env.DEBUG) console.debug("write state to kv:", state);
+        if (env.DEBUG) console.debug("wrote state to kv:", state);
     }
 }
 
