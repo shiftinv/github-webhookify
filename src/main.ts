@@ -56,10 +56,10 @@ async function checkGitHub(): Promise<void> {
         newEvents++;
 
         if (ev.type !== "PushEvent") continue;
+        // octokit types are unfortunately wrong and incomplete, so just cast it
         const pushEvent = ev as PushEvent;
         if (pushEvent.payload.ref !== `refs/heads/${env.TARGET_BRANCH}`) continue;
 
-        // octokit types are unfortunately wrong and incomplete, so just cast it
         const newEvent = convertPushEvent(pushEvent);
         await sendWebhook(newEvent);
         newId = id;
