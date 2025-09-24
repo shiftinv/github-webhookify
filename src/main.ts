@@ -9,15 +9,11 @@ import { initSentry } from "./sentry.ts";
 const kv = await Deno.openKv(Deno.env.get("KV_PATH"));
 
 const KV_KEY = ["last-state"];
-// keep global state to save kv units, since deno deploy isolates usually stay alive for a while
 type State = { etag: string | undefined; lastId: number };
-let state: State | null = null;
 
 async function checkGitHub(): Promise<void> {
-    if (!state) {
-        state = (await kv.get<State>(KV_KEY)).value;
-        if (env.DEBUG) console.debug("read state from kv:", state);
-    }
+    const state = (await kv.get<State>(KV_KEY)).value;
+
     const etag = state?.etag;
     const lastId = state?.lastId ?? 0;
     const initialRun = lastId === 0;
@@ -73,9 +69,8 @@ async function checkGitHub(): Promise<void> {
     }
 
     if ((newEtag && newEtag !== etag) || (newId && newId !== lastId)) {
-        state = { etag: newEtag ?? etag, lastId: newId ?? lastId };
-        await kv.set(KV_KEY, state);
-        if (env.DEBUG) console.debug("wrote state to kv:", state);
+        const newState: State = { etag: newEtag ?? etag, lastId: newId ?? lastId };
+        await kv.set(KV_KEY, newState);
     }
 }
 
