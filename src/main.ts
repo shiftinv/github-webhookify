@@ -45,25 +45,27 @@ async function checkGitHub(): Promise<void> {
     const newEtag = events.headers["etag"];
     if (env.DEBUG) console.debug(`previous etag: ${etag}, new etag: ${newEtag}`);
 
-    // on the initial run, we don't want to send any events
-    const eventsData = initialRun ? [] : events.data.toReversed();
-
     let newEvents = 0;
-    let newId = 0;
-    for (const ev of eventsData) {
+    let newId = lastId;
+    for (const ev of events.data.toReversed()) {
         const id = Number(ev.id);
         if (id <= lastId) continue;
         newEvents++;
+
+        if (ev.type !== "PushEvent") continue;
+
         // only consider newer IDs in case the /events API just forgets about the last couple days
         newId = Math.max(id, newId);
 
-        if (ev.type !== "PushEvent") continue;
-        // octokit types are unfortunately wrong and incomplete, so just cast it
-        const pushEvent = ev as PushEvent;
-        if (pushEvent.payload.ref !== `refs/heads/${env.TARGET_BRANCH}`) continue;
+        // on the initial run, we don't want to send any events, only update to the latest state
+        if (!initialRun) {
+            // octokit types are unfortunately wrong and incomplete, so just cast it
+            const pushEvent = ev as PushEvent;
+            if (pushEvent.payload.ref !== `refs/heads/${env.TARGET_BRANCH}`) continue;
 
-        const newEvent = convertPushEvent(pushEvent);
-        await sendWebhook(newEvent);
+            const newEvent = convertPushEvent(pushEvent);
+            await sendWebhook(newEvent);
+        }
     }
     if (env.DEBUG) {
         console.debug(`found ${newEvents} new events since last check`);
