@@ -46,6 +46,7 @@ async function checkGitHub(): Promise<void> {
     const eventsData = initialRun ? [] : events.data.toReversed();
 
     let newEvents = 0;
+    let newId: number | undefined = undefined;
     for (const ev of eventsData) {
         const id = Number(ev.id);
         if (id <= lastId) continue;
@@ -58,11 +59,14 @@ async function checkGitHub(): Promise<void> {
         // octokit types are unfortunately wrong and incomplete, so just cast it
         const newEvent = convertPushEvent(pushEvent);
         await sendWebhook(newEvent);
+        newId = id;
     }
-    if (env.DEBUG) console.debug(`found ${newEvents} new events since last check`);
+    if (env.DEBUG) {
+        console.debug(`found ${newEvents} new events since last check`);
+        console.debug(`previous id: ${lastId}, new id: ${newId}`);
+    }
 
-    const newId = events.data[0] ? Number(events.data[0].id) : null;
-    if (newEtag != etag || newId != lastId) {
+    if ((newEtag && newEtag !== etag) || (newId && newId !== lastId)) {
         state = { etag: newEtag ?? etag, lastId: newId ?? lastId };
         await kv.set(KV_KEY, state);
     }
