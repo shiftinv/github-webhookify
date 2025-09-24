@@ -12,7 +12,7 @@ RUN deno cache src/main.ts
 
 CMD [\
     "run",\
-    "--allow-env", "--allow-net=discord.com,api.github.com", "--allow-read=/data", "--allow-write=/data",\
+    "--allow-env", "--allow-net", "--allow-read=/data", "--allow-write=/data",\
     "--unstable-kv",\
     "--unstable-cron",\
     "src/main.ts"\
