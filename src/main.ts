@@ -49,11 +49,13 @@ async function checkGitHub(): Promise<void> {
     const eventsData = initialRun ? [] : events.data.toReversed();
 
     let newEvents = 0;
-    let newId: number | undefined = undefined;
+    let newId = 0;
     for (const ev of eventsData) {
         const id = Number(ev.id);
         if (id <= lastId) continue;
         newEvents++;
+        // only consider newer IDs in case the /events API just forgets about the last couple days
+        newId = Math.max(id, newId);
 
         if (ev.type !== "PushEvent") continue;
         // octokit types are unfortunately wrong and incomplete, so just cast it
@@ -62,7 +64,6 @@ async function checkGitHub(): Promise<void> {
 
         const newEvent = convertPushEvent(pushEvent);
         await sendWebhook(newEvent);
-        newId = id;
     }
     if (env.DEBUG) {
         console.debug(`found ${newEvents} new events since last check`);
